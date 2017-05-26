@@ -6,12 +6,14 @@
 #include "CharQueue.h"
 #include "SimCom.h"
 
+#include "stm32f1xx_hal.h"
+
 #define PH_BUF_LEN 500
 
 /*
   These functions should be called only by the data link layer
 */
-bool ph_init();
+bool ph_init(UART_HandleTypeDef *device);
 bool ph_receive(char *data);
 bool ph_send(char data);
 

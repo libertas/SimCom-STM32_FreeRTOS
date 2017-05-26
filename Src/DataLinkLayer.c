@@ -6,9 +6,9 @@
 // [STX] [CRC] [DATA[n]] [ETX]
 
 
-bool dl_init()
+bool dl_init(UART_HandleTypeDef *device)
 {
-  return ph_init();
+  return ph_init(device);
 }
 
 bool dl_receive(char *data, SIMCOM_LENGTH_TYPE *length)

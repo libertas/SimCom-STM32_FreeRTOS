@@ -3,11 +3,27 @@
 char ph_send_queue_buf[PH_BUF_LEN];
 char ph_receive_queue_buf[PH_BUF_LEN];
 
+char ph_send_dma_buf[PH_BUF_LEN];
+char ph_receive_it_buf[1];
+
 char_queue ph_send_queue;
 char_queue ph_receive_queue;
 bool ph_initialized = false;
 
-bool ph_init()
+UART_HandleTypeDef *uart_device;
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	char *p = huart->pRxBuffPtr - 1;
+
+	ph_receive_intr(*p);
+
+	sl_receive_intr();
+
+	HAL_UART_Receive_IT(huart, p, 1);
+}
+
+bool ph_init(UART_HandleTypeDef *device)
 {
   if(ph_initialized) {
     return false;
@@ -15,6 +31,10 @@ bool ph_init()
 
   init_char_queue(&ph_send_queue, ph_send_queue_buf, PH_BUF_LEN);
   init_char_queue(&ph_receive_queue, ph_receive_queue_buf, PH_BUF_LEN);
+
+  uart_device = device;
+
+  HAL_UART_Receive_IT(uart_device, ph_receive_it_buf, 1);
 
   ph_initialized = true;
   return true;
@@ -53,10 +73,17 @@ void ph_send_intr()
     You must call this function timely to send the data in the queue
     This function must be modified to use different types of physical devices
   */
-  #if (defined TEST_PHYSICAL) || (defined TEST_DATALINK) || (defined TEST_SERVICE)
   char c;
-  while(out_char_queue(&ph_send_queue, &c)) {
-    ph_receive_intr(c);
+  SIMCOM_LENGTH_TYPE count = 0;
+
+  while(uart_device->State != HAL_UART_STATE_READY || uart_device->State != HAL_UART_STATE_BUSY_RX) {
+	  osDelay(1);
   }
-  #endif
+
+  while(out_char_queue(&ph_send_queue, &c)) {
+    ph_send_dma_buf[count] = c;
+    count++;
+  }
+
+  HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
 }

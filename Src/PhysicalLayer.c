@@ -76,7 +76,7 @@ void ph_send_intr()
   char c;
   SIMCOM_LENGTH_TYPE count = 0;
 
-  while(uart_device->State != HAL_UART_STATE_READY || uart_device->State != HAL_UART_STATE_BUSY_RX) {
+  while(uart_device->State != HAL_UART_STATE_READY && uart_device->State != HAL_UART_STATE_BUSY_RX) {
 	  osDelay(1);
   }
 
@@ -86,4 +86,5 @@ void ph_send_intr()
   }
 
   HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
+  osDelay(1);
 }

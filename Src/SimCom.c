@@ -7,6 +7,9 @@
 extern void ph_send_intr();
 
 
+/*
+ * Test
+ */
 void callback0(char from, char to, const char* data, SIMCOM_LENGTH_TYPE length)
 {
   char msg[100];

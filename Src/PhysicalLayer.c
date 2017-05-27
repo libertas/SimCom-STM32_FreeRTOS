@@ -56,12 +56,12 @@ bool ph_send(char data)
   }
 
 
-//  osMutexWait(ph_send_lock, osWaitForever);
+  osMutexWait(ph_send_lock, osWaitForever);
 
   bool result = in_char_queue(&ph_send_queue, data);
 
-//  osMutexRelease(ph_send_lock);
-//  osThreadYield();
+  osMutexRelease(ph_send_lock);
+  osThreadYield();
 
   return result;
 }
@@ -94,7 +94,7 @@ void ph_send_intr()
   SIMCOM_LENGTH_TYPE count = 0;
 
   while(uart_device->State != HAL_UART_STATE_READY && uart_device->State != HAL_UART_STATE_BUSY_RX) {
-	  osDelay(1);
+	  osThreadYield();
   }
 
 
@@ -106,8 +106,6 @@ void ph_send_intr()
   }
 
   osMutexRelease(ph_send_lock);
-  osThreadYield();
-
   HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
-  osDelay(1);
+  osThreadYield();
 }

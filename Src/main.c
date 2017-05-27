@@ -111,6 +111,7 @@ int main(void)
   MX_USART1_UART_Init();
 
   /* USER CODE BEGIN 2 */
+  simcom_init(&huart1);
 
   /* USER CODE END 2 */
 
@@ -274,7 +275,6 @@ void StartDefaultTask(void const * argument)
 {
 
   /* USER CODE BEGIN 5 */
-  simcom_init(&huart1);
 
   /* Infinite loop */
   for(;;)

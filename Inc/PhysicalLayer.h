@@ -4,11 +4,15 @@
 #include <stdbool.h>
 
 #include "CharQueue.h"
+#include "FIFO.h"
 #include "SimCom.h"
 
 #include "stm32f1xx_hal.h"
 
 #define PH_BUF_LEN 500
+
+extern char_queue ph_receive_queue;
+extern fifo ph_receive_fifo;
 
 /*
   These functions should be called only by the data link layer

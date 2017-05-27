@@ -1,14 +1,21 @@
 #include "PhysicalLayer.h"
 
+#include "cmsis_os.h"
+
 char ph_send_queue_buf[PH_BUF_LEN];
 char ph_receive_queue_buf[PH_BUF_LEN];
 
 char ph_send_dma_buf[PH_BUF_LEN];
 char ph_receive_it_buf[1];
+char ph_receive_fifo_buf[PH_BUF_LEN];
 
 char_queue ph_send_queue;
 char_queue ph_receive_queue;
+fifo ph_receive_fifo;
 bool ph_initialized = false;
+
+osMutexId ph_send_lock;
+osMutexDef(ph_send_lock);
 
 UART_HandleTypeDef *uart_device;
 
@@ -18,7 +25,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 	ph_receive_intr(*p);
 
-	sl_receive_intr();
 
 	HAL_UART_Receive_IT(huart, p, 1);
 }
@@ -29,8 +35,11 @@ bool ph_init(UART_HandleTypeDef *device)
     return false;
   }
 
+  ph_send_lock = osMutexCreate(osMutex(ph_send_lock));
+
   init_char_queue(&ph_send_queue, ph_send_queue_buf, PH_BUF_LEN);
   init_char_queue(&ph_receive_queue, ph_receive_queue_buf, PH_BUF_LEN);
+  init_fifo(&ph_receive_fifo, ph_receive_fifo_buf, PH_BUF_LEN);
 
   uart_device = device;
 
@@ -46,7 +55,15 @@ bool ph_send(char data)
     return false;
   }
 
-  return in_char_queue(&ph_send_queue, data);
+
+  osMutexWait(ph_send_lock, osWaitForever);
+
+  bool result = in_char_queue(&ph_send_queue, data);
+
+  osMutexRelease(ph_send_lock);
+  osThreadYield();
+
+  return result;
 }
 
 bool ph_receive(char *data)
@@ -64,7 +81,7 @@ bool ph_receive_intr(char data)
     return false;
   }
 
-  return in_char_queue(&ph_receive_queue, data);
+  return in_fifo(&ph_receive_fifo, data);
 }
 
 void ph_send_intr()
@@ -80,10 +97,16 @@ void ph_send_intr()
 	  osDelay(1);
   }
 
+
+  osMutexWait(ph_send_lock, osWaitForever);
+
   while(out_char_queue(&ph_send_queue, &c)) {
     ph_send_dma_buf[count] = c;
     count++;
   }
+
+  osMutexRelease(ph_send_lock);
+  osThreadYield();
 
   HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
   osDelay(1);

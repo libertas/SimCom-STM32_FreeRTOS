@@ -1,11 +1,20 @@
 #include "DataLinkLayer.h"
 #include "ServiceLayer.h"
 
+#include "cmsis_os.h"
+
+
+osMutexId sl_send_lock;
+osMutexDef(sl_send_lock);
+
+
 void (*callbacks[SL_CALLBACK_NUM])(char, char, const char*, SIMCOM_LENGTH_TYPE) = {0};
 
 
 bool sl_init(UART_HandleTypeDef *device)
 {
+  sl_send_lock = osMutexCreate(osMutex(sl_send_lock));
+
   return dl_init(device);
 }
 
@@ -23,12 +32,20 @@ bool sl_send(char from_port, char to_port, const char *data, SIMCOM_LENGTH_TYPE 
 {
   char sl_send_buf[SL_BUF_LEN];
 
+  osMutexWait(sl_send_lock, osWaitForever);
+
   sl_send_buf[0] = from_port;
   sl_send_buf[1] = to_port;
   for(SIMCOM_LENGTH_TYPE i = 0; i < length; i++) {
     sl_send_buf[i + 2] = data[i];
   }
-  return dl_send(sl_send_buf, length + 2);
+
+  bool result = dl_send(sl_send_buf, length + 2);
+
+  osMutexRelease(sl_send_lock);
+  osThreadYield();
+
+  return result;
 }
 
 bool sl_receive_intr()

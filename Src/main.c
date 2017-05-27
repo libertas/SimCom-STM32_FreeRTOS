@@ -279,6 +279,8 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
+	  sl_send(0,0,"test", 4);
+
 	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
 	  osDelay(500);
 	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 1);

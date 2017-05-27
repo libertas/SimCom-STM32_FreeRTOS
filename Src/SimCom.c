@@ -16,10 +16,7 @@ extern void ph_send_intr();
  */
 void callback0(char from, char to, const char* data, SIMCOM_LENGTH_TYPE length)
 {
-  char msg[100];
-  sprintf(msg, "callback %d, from %d, length %d\tdata:%s",\
-    to, from, length, data);
-  sl_send(to, from, msg, strlen(msg));
+  sl_send(to,from,data,length);
 }
 
 osThreadId sendTaskHandle;

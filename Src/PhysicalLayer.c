@@ -56,12 +56,12 @@ bool ph_send(char data)
   }
 
 
-  osMutexWait(ph_send_lock, osWaitForever);
+//  osMutexWait(ph_send_lock, osWaitForever);
 
   bool result = in_char_queue(&ph_send_queue, data);
 
-  osMutexRelease(ph_send_lock);
-  osThreadYield();
+//  osMutexRelease(ph_send_lock);
+//  osThreadYield();
 
   return result;
 }

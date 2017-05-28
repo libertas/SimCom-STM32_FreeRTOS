@@ -61,6 +61,7 @@ bool ph_send(char data)
   bool result = in_char_queue(&ph_send_queue, data);
 
   osMutexRelease(ph_send_lock);
+  osThreadYield();
 
   return result;
 }

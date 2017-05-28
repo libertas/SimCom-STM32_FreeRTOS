@@ -53,8 +53,8 @@ bool simcom_init(UART_HandleTypeDef *device)
 	bool state = sl_init(device);
 
 	if(state) {
-		osThreadDef(sendTask, StartSendTask, osPriorityNormal, 0, 128);
-		osThreadDef(receiveTask, StartReceiveTask, osPriorityNormal, 0, 128);
+		osThreadDef(sendTask, StartSendTask, osPriorityNormal, 0, 256);
+		osThreadDef(receiveTask, StartReceiveTask, osPriorityNormal, 0, 256);
 
 		sendTaskHandle = osThreadCreate(osThread(sendTask), NULL);
 		receiveTaskHandle = osThreadCreate(osThread(receiveTask), NULL);

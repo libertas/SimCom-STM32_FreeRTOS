@@ -8,9 +8,6 @@
 #include "cmsis_os.h"
 
 
-extern void ph_send_intr();
-
-
 /*
  * Test
  */
@@ -35,22 +32,22 @@ void StartReceiveTask(void const * argument)
   for(;;)
   {
 	  char c;
+	  char buf[1];
 
-	  if(out_fifo(&ph_receive_fifo, &c)) {
-		  in_char_queue(&ph_receive_queue, c);
-		  sl_receive_intr();
-
-	  } else {
-		  osDelay(1);
+	  uint8_t count = usbRead(0, buf, 1);
+	  for(uint8_t i = 0; i < count; i++) {
+		  ph_receive_intr(buf[i]);
 	  }
+	  sl_receive_intr();
+	  osThreadYield();
   }
 }
 
-bool simcom_init(UART_HandleTypeDef *device)
+bool simcom_init()
 {
 	sl_config(0, callback0);
 
-	bool state = sl_init(device);
+	bool state = sl_init();
 
 	if(state) {
 		osThreadDef(sendTask, StartSendTask, osPriorityNormal, 0, 128);

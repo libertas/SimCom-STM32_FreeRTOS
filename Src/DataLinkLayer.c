@@ -11,11 +11,11 @@
 osMutexId dl_send_lock;
 osMutexDef(dl_send_lock);
 
-bool dl_init(UART_HandleTypeDef *device)
+bool dl_init()
 {
   dl_send_lock = osMutexCreate(osMutex(dl_send_lock));
 
-  return ph_init(device);
+  return ph_init();
 }
 
 bool dl_receive(char *data, SIMCOM_LENGTH_TYPE *length)

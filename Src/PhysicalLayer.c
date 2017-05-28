@@ -1,13 +1,13 @@
 #include "PhysicalLayer.h"
 
 #include "cmsis_os.h"
+#include "usb.h"
 
 char ph_send_queue_buf[PH_BUF_LEN];
 char ph_receive_queue_buf[PH_BUF_LEN];
 
 char ph_send_dma_buf[PH_BUF_LEN];
 char ph_receive_it_buf[1];
-char ph_receive_fifo_buf[PH_BUF_LEN];
 
 char_queue ph_send_queue;
 char_queue ph_receive_queue;
@@ -17,19 +17,8 @@ bool ph_initialized = false;
 osMutexId ph_send_lock;
 osMutexDef(ph_send_lock);
 
-UART_HandleTypeDef *uart_device;
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	char *p = huart->pRxBuffPtr - 1;
-
-	ph_receive_intr(*p);
-
-
-	HAL_UART_Receive_IT(huart, p, 1);
-}
-
-bool ph_init(UART_HandleTypeDef *device)
+bool ph_init()
 {
   if(ph_initialized) {
     return false;
@@ -39,11 +28,6 @@ bool ph_init(UART_HandleTypeDef *device)
 
   init_char_queue(&ph_send_queue, ph_send_queue_buf, PH_BUF_LEN);
   init_char_queue(&ph_receive_queue, ph_receive_queue_buf, PH_BUF_LEN);
-  init_fifo(&ph_receive_fifo, ph_receive_fifo_buf, PH_BUF_LEN);
-
-  uart_device = device;
-
-  HAL_UART_Receive_IT(uart_device, ph_receive_it_buf, 1);
 
   ph_initialized = true;
   return true;
@@ -81,7 +65,7 @@ bool ph_receive_intr(char data)
     return false;
   }
 
-  return in_fifo(&ph_receive_fifo, data);
+  return in_char_queue(&ph_receive_queue, data);;
 }
 
 void ph_send_intr()
@@ -93,11 +77,6 @@ void ph_send_intr()
   char c;
   SIMCOM_LENGTH_TYPE count = 0;
 
-  while(uart_device->State != HAL_UART_STATE_READY && uart_device->State != HAL_UART_STATE_BUSY_RX) {
-	  osThreadYield();
-  }
-
-
   osMutexWait(ph_send_lock, osWaitForever);
 
   while(out_char_queue(&ph_send_queue, &c)) {
@@ -106,6 +85,7 @@ void ph_send_intr()
   }
 
   osMutexRelease(ph_send_lock);
-  HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
-  osThreadYield();
+  usbWrite(0, ph_send_dma_buf, count);
+//  osThreadYield();
+  osDelay(1);
 }

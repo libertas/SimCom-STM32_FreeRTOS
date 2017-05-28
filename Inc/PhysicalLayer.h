@@ -17,7 +17,7 @@ extern fifo ph_receive_fifo;
 /*
   These functions should be called only by the data link layer
 */
-bool ph_init(UART_HandleTypeDef *device);
+bool ph_init();
 bool ph_receive(char *data);
 bool ph_send(char data);
 

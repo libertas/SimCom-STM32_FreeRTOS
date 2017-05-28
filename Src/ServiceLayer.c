@@ -11,11 +11,11 @@ osMutexDef(sl_send_lock);
 void (*callbacks[SL_CALLBACK_NUM])(char, char, const char*, SIMCOM_LENGTH_TYPE) = {0};
 
 
-bool sl_init(UART_HandleTypeDef *device)
+bool sl_init()
 {
   sl_send_lock = osMutexCreate(osMutex(sl_send_lock));
 
-  return dl_init(device);
+  return dl_init();
 }
 
 bool sl_config(char port, void (*callback)(char, char, const char*, SIMCOM_LENGTH_TYPE))

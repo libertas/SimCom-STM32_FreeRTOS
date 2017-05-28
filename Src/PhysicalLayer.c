@@ -86,6 +86,6 @@ void ph_send_intr()
 
   osMutexRelease(ph_send_lock);
   usbWrite(0, ph_send_dma_buf, count);
-//  osThreadYield();
+  osThreadYield();
   osDelay(1);
 }

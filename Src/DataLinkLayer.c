@@ -112,7 +112,7 @@ bool dl_send(const char *data, SIMCOM_LENGTH_TYPE length)
     return false;
   }
 
-//  osMutexWait(dl_send_lock, osWaitForever);
+  osMutexWait(dl_send_lock, osWaitForever);
 
   // STX
   dl_send_buf[0] = 0x02;
@@ -147,8 +147,8 @@ bool dl_send(const char *data, SIMCOM_LENGTH_TYPE length)
   }
 
 
-//  osMutexRelease(dl_send_lock);
-//  osThreadYield();
+  osMutexRelease(dl_send_lock);
+  osThreadYield();
 
   return true;
 }

@@ -60,6 +60,11 @@ UART_HandleTypeDef huart1;
 DMA_HandleTypeDef hdma_usart1_tx;
 
 osThreadId defaultTaskHandle;
+osThreadId sendTaskHandle;
+osThreadId receiveTaskHandle;
+osMutexId sl_send_lockHandle;
+osMutexId dl_send_lockHandle;
+osMutexId ph_send_lockHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
@@ -72,6 +77,8 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART1_UART_Init(void);
 void StartDefaultTask(void const * argument);
+extern void StartSendTask(void const * argument);
+extern void StartReceiveTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -115,6 +122,19 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* Create the mutex(es) */
+  /* definition and creation of sl_send_lock */
+  osMutexDef(sl_send_lock);
+  sl_send_lockHandle = osMutexCreate(osMutex(sl_send_lock));
+
+  /* definition and creation of dl_send_lock */
+  osMutexDef(dl_send_lock);
+  dl_send_lockHandle = osMutexCreate(osMutex(dl_send_lock));
+
+  /* definition and creation of ph_send_lock */
+  osMutexDef(ph_send_lock);
+  ph_send_lockHandle = osMutexCreate(osMutex(ph_send_lock));
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -131,6 +151,14 @@ int main(void)
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of sendTask */
+  osThreadDef(sendTask, StartSendTask, osPriorityNormal, 0, 256);
+  sendTaskHandle = osThreadCreate(osThread(sendTask), NULL);
+
+  /* definition and creation of receiveTask */
+  osThreadDef(receiveTask, StartReceiveTask, osPriorityNormal, 0, 256);
+  receiveTaskHandle = osThreadCreate(osThread(receiveTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */

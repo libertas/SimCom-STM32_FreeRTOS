@@ -14,8 +14,7 @@ char_queue ph_receive_queue;
 fifo ph_receive_fifo;
 bool ph_initialized = false;
 
-osMutexId ph_send_lock;
-osMutexDef(ph_send_lock);
+extern osMutexId ph_send_lockHandle;
 
 UART_HandleTypeDef *uart_device;
 
@@ -34,8 +33,6 @@ bool ph_init(UART_HandleTypeDef *device)
   if(ph_initialized) {
     return false;
   }
-
-  ph_send_lock = osMutexCreate(osMutex(ph_send_lock));
 
   init_char_queue(&ph_send_queue, ph_send_queue_buf, PH_BUF_LEN);
   init_char_queue(&ph_receive_queue, ph_receive_queue_buf, PH_BUF_LEN);
@@ -56,11 +53,11 @@ bool ph_send(char data)
   }
 
 
-  osMutexWait(ph_send_lock, osWaitForever);
+  osMutexWait(ph_send_lockHandle, osWaitForever);
 
   bool result = in_char_queue(&ph_send_queue, data);
 
-  osMutexRelease(ph_send_lock);
+  osMutexRelease(ph_send_lockHandle);
   osThreadYield();
 
   return result;
@@ -98,14 +95,14 @@ void ph_send_intr()
   }
 
 
-  osMutexWait(ph_send_lock, osWaitForever);
+  osMutexWait(ph_send_lockHandle, osWaitForever);
 
   while(out_char_queue(&ph_send_queue, &c)) {
     ph_send_dma_buf[count] = c;
     count++;
   }
 
-  osMutexRelease(ph_send_lock);
   HAL_UART_Transmit_DMA(uart_device, ph_send_dma_buf, count);
+  osMutexRelease(ph_send_lockHandle);
   osThreadYield();
 }

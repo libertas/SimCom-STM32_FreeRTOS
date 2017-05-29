@@ -4,8 +4,7 @@
 #include "cmsis_os.h"
 
 
-osMutexId sl_send_lock;
-osMutexDef(sl_send_lock);
+extern osMutexId sl_send_lockHandle;
 
 
 void (*callbacks[SL_CALLBACK_NUM])(char, char, const char*, SIMCOM_LENGTH_TYPE) = {0};
@@ -13,8 +12,6 @@ void (*callbacks[SL_CALLBACK_NUM])(char, char, const char*, SIMCOM_LENGTH_TYPE) 
 
 bool sl_init(UART_HandleTypeDef *device)
 {
-  sl_send_lock = osMutexCreate(osMutex(sl_send_lock));
-
   return dl_init(device);
 }
 
@@ -32,7 +29,7 @@ bool sl_send(char from_port, char to_port, const char *data, SIMCOM_LENGTH_TYPE 
 {
   char sl_send_buf[SL_BUF_LEN];
 
-  osMutexWait(sl_send_lock, osWaitForever);
+  osMutexWait(sl_send_lockHandle, osWaitForever);
 
   sl_send_buf[0] = from_port;
   sl_send_buf[1] = to_port;
@@ -42,7 +39,7 @@ bool sl_send(char from_port, char to_port, const char *data, SIMCOM_LENGTH_TYPE 
 
   bool result = dl_send(sl_send_buf, length + 2);
 
-  osMutexRelease(sl_send_lock);
+  osMutexRelease(sl_send_lockHandle);
   osThreadYield();
 
   return result;

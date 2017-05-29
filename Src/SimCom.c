@@ -19,9 +19,6 @@ void callback0(char from, char to, const char* data, SIMCOM_LENGTH_TYPE length)
   sl_send(to,from,data,length);
 }
 
-osThreadId sendTaskHandle;
-osThreadId receiveTaskHandle;
-
 void StartSendTask(void const * argument)
 {
   for(;;)
@@ -53,11 +50,6 @@ bool simcom_init(UART_HandleTypeDef *device)
 	bool state = sl_init(device);
 
 	if(state) {
-		osThreadDef(sendTask, StartSendTask, osPriorityNormal, 0, 256);
-		osThreadDef(receiveTask, StartReceiveTask, osPriorityNormal, 0, 256);
-
-		sendTaskHandle = osThreadCreate(osThread(sendTask), NULL);
-		receiveTaskHandle = osThreadCreate(osThread(receiveTask), NULL);
 	}
 
 	return state;

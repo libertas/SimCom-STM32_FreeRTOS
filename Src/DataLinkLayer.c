@@ -7,14 +7,10 @@
 // Buffer Format:
 // [STX] [CRC] [DATA[n]] [ETX]
 
-
-osMutexId dl_send_lock;
-osMutexDef(dl_send_lock);
+extern osMutexId dl_send_lockHandle;
 
 bool dl_init(UART_HandleTypeDef *device)
 {
-  dl_send_lock = osMutexCreate(osMutex(dl_send_lock));
-
   return ph_init(device);
 }
 
@@ -112,7 +108,7 @@ bool dl_send(const char *data, SIMCOM_LENGTH_TYPE length)
     return false;
   }
 
-  osMutexWait(dl_send_lock, osWaitForever);
+  osMutexWait(dl_send_lockHandle, osWaitForever);
 
   // STX
   dl_send_buf[0] = 0x02;
@@ -138,7 +134,7 @@ bool dl_send(const char *data, SIMCOM_LENGTH_TYPE length)
     while(!ph_send(dl_send_buf[i])) {
 
       if(count > DL_RETRY_TIMES) {
-    	osMutexRelease(dl_send_lock);
+    	osMutexRelease(dl_send_lockHandle);
     	osThreadYield();
         return false;
       }
@@ -147,7 +143,7 @@ bool dl_send(const char *data, SIMCOM_LENGTH_TYPE length)
   }
 
 
-  osMutexRelease(dl_send_lock);
+  osMutexRelease(dl_send_lockHandle);
   osThreadYield();
 
   return true;

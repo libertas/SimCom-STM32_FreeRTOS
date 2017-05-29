@@ -8,7 +8,9 @@
 #include "cmsis_os.h"
 
 
-extern void ph_send_intr();
+extern char ph_receive_it_buf[];
+
+UART_HandleTypeDef *uart_device;
 
 
 /*
@@ -38,6 +40,7 @@ void StartReceiveTask(void const * argument)
 		  sl_receive_intr();
 
 	  } else {
+		  HAL_UART_Receive_IT(uart_device, ph_receive_it_buf, 1);
 		  osDelay(1);
 	  }
   }
@@ -47,10 +50,9 @@ bool simcom_init(UART_HandleTypeDef *device)
 {
 	sl_config(0, callback0);
 
-	bool state = sl_init(device);
+	uart_device = device;
 
-	if(state) {
-	}
+	bool state = sl_init(device);
 
 	return state;
 }
